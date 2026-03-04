@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Series Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 32px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 40px;
+        }
+
+        .problem-block {
+            background: #1a1f2e;
+            border: 1px solid #2d3748;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 36px;
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .problem-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin: 20px 0 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+
+        th {
+            background: #252d3d;
+            color: #94a3b8;
+            padding: 8px 10px;
+            text-align: center;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            border: 1px solid #2d3748;
+        }
+
+        td {
+            padding: 7px 10px;
+            text-align: center;
+            border: 1px solid #2d3748;
+            color: #cbd5e1;
+        }
+
+        tr:nth-child(even) td {
+            background: #1e2535;
+        }
+
+        .mse-box {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e3a5f, #1a2744);
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 10px 20px;
+            margin: 8px 8px 8px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .mse-box .label {
+            color: #93c5fd;
+            font-size: 0.75rem;
+        }
+
+        .mse-box .value {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-top: 2px;
+        }
+
+        .mse-box.winner {
+            background: linear-gradient(135deg, #14532d, #15412a);
+            border-color: #22c55e;
+        }
+
+        .mse-box.winner .label {
+            color: #86efac;
+        }
+
+        .winner-badge {
+            display: inline-block;
+            background: #22c55e;
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            vertical-align: middle;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 340px;
+            margin-top: 24px;
+            background: #12171f;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #2d3748;
+        }
+
+        .decision-box {
+            background: linear-gradient(135deg, #1c2a1c, #162016);
+            border: 1px solid #22c55e;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-size: 0.88rem;
+            color: #86efac;
+            line-height: 1.6;
+        }
+
+        .decision-box strong {
+            color: #4ade80;
+        }
+
+        .weights-note {
+            background: #1e1e2e;
+            border-left: 3px solid #a78bfa;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            border-radius: 0 6px 6px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>📈 SEA SOLIN </h1>
+    <p class="subtitle">Moving Averages &amp; Exponential Smoothing</p>
+
+    <!-- PROBLEM 1 -->
+    <div class="problem-block">
+        <div class="problem-title">Problem 1 — Moving Averages &nbsp;|&nbsp; Xₜ = {4, 6, 3, 5, 7, 4, 6, 8, 5, 9, 6, 7,
+            4, 5, 8}</div>
+
+        <!-- Part i: 3-period MA -->
+        <div class="section-title">i. 3-Period Moving Average (MA3)</div>
+        <table id="ma3-table"></table>
+        <div id="ma3-mse"></div>
+
+        <!-- Part ii: 5-period MA -->
+        <div class="section-title">ii. 5-Period Moving Average (MA5)</div>
+        <table id="ma5-table"></table>
+        <div id="ma5-mse"></div>
+
+        <!-- Part iii: 3-period WMA -->
+        <div class="section-title">iii. 3-Period Weighted Moving Average (WMA3) — Weights: 1, 2, 3 (oldest→newest)</div>
+        <div class="weights-note">Weights: w₁=1, w₂=2, w₃=3 (sum=6) applied to periods t-2, t-1, t respectively</div>
+        <table id="wma3-table"></table>
+        <div id="wma3-mse"></div>
+
+        <!-- Part iv: Winner + Plot -->
+        <div class="section-title">iv. Best Model Selection &amp; Plot</div>
+        <div id="p1-winner"></div>
+        <div class="chart-container">
+            <canvas id="chart1"></canvas>
+        </div>
+    </div>
+
+    <!-- PROBLEM 2 -->
+    <div class="problem-block">
+        <div class="problem-title">Problem 2 — Exponential Smoothing &nbsp;|&nbsp; Yₜ = {2, 5, 3, 6, 5, 8, 7, 4, 9, 6}
+        </div>
+
+        <!-- Part i: alpha=0.2 -->
+        <div class="section-title">i. Exponential Smoothing F(t) with α = 0.2</div>
+        <div class="weights-note">Formula: F(t) = α·Y(t-1) + (1-α)·F(t-1) &nbsp;|&nbsp; Initialization: F(1) = Y(1) = 2
+        </div>
+        <table id="es02-table"></table>
+        <div id="es02-mse"></div>
+
+        <!-- Part ii: alpha=0.8 -->
+        <div class="section-title">ii. Exponential Smoothing F'(t) with α = 0.8</div>
+        <div class="weights-note">Formula: F'(t) = α·Y(t-1) + (1-α)·F'(t-1) &nbsp;|&nbsp; Initialization: F'(1) = Y(1) =
+            2</div>
+        <table id="es08-table"></table>
+        <div id="es08-mse"></div>
+
+        <!-- Part iii: Plot + Decision -->
+        <div class="section-title">iii. Plot &amp; Model Decision</div>
+        <div class="chart-container">
+            <canvas id="chart2"></canvas>
+        </div>
+        <div id="p2-decision"></div>
+    </div>
+
+    <script>
+        // ─────────────────────────────────────────────
+        // PROBLEM 1 DATA
+        // ─────────────────────────────────────────────
+        const Xt = [4, 6, 3, 5, 7, 4, 6, 8, 5, 9, 6, 7, 4, 5, 8];
+        const n1 = Xt.length;
+        const labels1 = Xt.map((_, i) => `t=${i + 1}`);
+
+        // ── MA3 ──
+        const ma3 = Array(n1).fill(null);
+        for (let i = 2; i < n1; i++) ma3[i] = +((Xt[i - 2] + Xt[i - 1] + Xt[i]) / 3).toFixed(4);
+
+        // Forecast for next period uses last 3 values
+        // Error = Xt[i] - forecast(i) where forecast uses [i-3,i-2,i-1]
+        // i.e. we compare ma3[i] (avg of t-2,t-1,t) as forecast for t+1
+        // Standard: F(t+1)=MA3 at t → error at t+1 = X[t+1] - ma3[t]
+        // So errors start at index 3
+        let sse_ma3 = 0, cnt_ma3 = 0;
+        const err_ma3 = [];
+        for (let i = 0; i < n1; i++) {
+            if (i >= 3) {
+                const e = Xt[i] - ma3[i - 1];
+                err_ma3.push(+e.toFixed(4));
+                sse_ma3 += e * e;
+                cnt_ma3++;
+            } else { err_ma3.push(null); }
+        }
+        const mse_ma3 = +(sse_ma3 / cnt_ma3).toFixed(4);
+
+        // ── MA5 ──
+        const ma5 = Array(n1).fill(null);
+        for (let i = 4; i < n1; i++) ma5[i] = +((Xt[i - 4] + Xt[i - 3] + Xt[i - 2] + Xt[i - 1] + Xt[i]) / 5).toFixed(4);
+
+        let sse_ma5 = 0, cnt_ma5 = 0;
+        const err_ma5 = [];
+        for (let i = 0; i < n1; i++) {
+            if (i >= 5) {
+                const e = Xt[i] - ma5[i - 1];
+                err_ma5.push(+e.toFixed(4));
+                sse_ma5 += e * e;
+                cnt_ma5++;
+            } else { err_ma5.push(null); }
+        }
+        const mse_ma5 = +(sse_ma5 / cnt_ma5).toFixed(4);
+
+        // ── WMA3 weights 1,2,3 ──
+        const wma3 = Array(n1).fill(null);
+        for (let i = 2; i < n1; i++)
+            wma3[i] = +((1 * Xt[i - 2] + 2 * Xt[i - 1] + 3 * Xt[i]) / 6).toFixed(4);
+
+        let sse_wma3 = 0, cnt_wma3 = 0;
+        const err_wma3 = [];
+        for (let i = 0; i < n1; i++) {
+            if (i >= 3) {
+                const e = Xt[i] - wma3[i - 1];
+                err_wma3.push(+e.toFixed(4));
+                sse_wma3 += e * e;
+                cnt_wma3++;
+            } else { err_wma3.push(null); }
+        }
+        const mse_wma3 = +(sse_wma3 / cnt_wma3).toFixed(4);
+
+        // ─────────────────────────────────────────────
+        // PROBLEM 2 DATA
+        // ─────────────────────────────────────────────
+        const Yt = [2, 5, 3, 6, 5, 8, 7, 4, 9, 6];
+        const n2 = Yt.length;
+        const labels2 = Yt.map((_, i) => `t=${i + 1}`);
+
+        function expSmooth(data, alpha) {
+            const F = [null]; // F[0] undefined, F[1]=data[0]
+            F[0] = data[0]; // F(1)=Y(1)
+            for (let t = 1; t < data.length; t++)
+                F[t] = +(alpha * data[t - 1] + (1 - alpha) * F[t - 1]).toFixed(4);
+            return F;
+        }
+
+        const F02 = expSmooth(Yt, 0.2);
+        const F08 = expSmooth(Yt, 0.8);
+
+        // MSE: compare F(t) vs Y(t) for t=2..n (skip t=1 since F(1)=Y(1) trivially)
+        function calcMSE_ES(data, F) {
+            let sse = 0, cnt = 0;
+            const errs = [];
+            for (let t = 1; t < data.length; t++) {
+                const e = data[t] - F[t];
+                errs.push(+e.toFixed(4));
+                sse += e * e;
+                cnt++;
+            }
+            return { mse: +(sse / cnt).toFixed(4), errs };
+        }
+        const { mse: mse_02, errs: errs_02 } = calcMSE_ES(Yt, F02);
+        const { mse: mse_08, errs: errs_08 } = calcMSE_ES(Yt, F08);
+
+        // ─────────────────────────────────────────────
+        // RENDER TABLES
+        // ─────────────────────────────────────────────
+        function renderMA3Table() {
+            let h = `<tr><th>t</th><th>Xₜ</th><th>MA3(t) = Forecast for t+1</th><th>Error (Xₜ - F)</th><th>Error²</th></tr>`;
+            for (let i = 0; i < n1; i++) {
+                const fcast = i >= 3 ? ma3[i - 1] : '—';
+                const e = err_ma3[i] !== null ? err_ma3[i] : '—';
+                const e2 = err_ma3[i] !== null ? +(err_ma3[i] ** 2).toFixed(4) : '—';
+                const avg = i >= 2 ? ma3[i] : '—';
+                h += `<tr><td>${i + 1}</td><td>${Xt[i]}</td><td>${avg}</td><td>${e}</td><td>${e2}</td></tr>`;
+            }
+            document.getElementById('ma3-table').innerHTML = h;
+        }
+
+        function renderMA5Table() {
+            let h = `<tr><th>t</th><th>Xₜ</th><th>MA5(t)</th><th>Error (Xₜ - F)</th><th>Error²</th></tr>`;
+            for (let i = 0; i < n1; i++) {
+                const avg = i >= 4 ? ma5[i] : '—';
+                const e = err_ma5[i] !== null ? err_ma5[i] : '—';
+                const e2 = err_ma5[i] !== null ? +(err_ma5[i] ** 2).toFixed(4) : '—';
+                h += `<tr><td>${i + 1}</td><td>${Xt[i]}</td><td>${avg}</td><td>${e}</td><td>${e2}</td></tr>`;
+            }
+            document.getElementById('ma5-table').innerHTML = h;
+        }
+
+        function renderWMA3Table() {
+            let h = `<tr><th>t</th><th>Xₜ</th><th>WMA3(t)</th><th>Error (Xₜ - F)</th><th>Error²</th></tr>`;
+            for (let i = 0; i < n1; i++) {
+                const avg = i >= 2 ? wma3[i] : '—';
+                const e = err_wma3[i] !== null ? err_wma3[i] : '—';
+                const e2 = err_wma3[i] !== null ? +(err_wma3[i] ** 2).toFixed(4) : '—';
+                h += `<tr><td>${i + 1}</td><td>${Xt[i]}</td><td>${avg}</td><td>${e}</td><td>${e2}</td></tr>`;
+            }
+            document.getElementById('wma3-table').innerHTML = h;
+        }
+
+        function renderESTable(tableId, data, F, errs, alpha) {
+            let h = `<tr><th>t</th><th>Yₜ</th><th>F(t) α=${alpha}</th><th>Error (Yₜ - F(t))</th><th>Error²</th></tr>`;
+            for (let t = 0; t < data.length; t++) {
+                const e = t === 0 ? '—' : errs[t - 1];
+                const e2 = t === 0 ? '—' : +(errs[t - 1] ** 2).toFixed(4);
+                h += `<tr><td>${t + 1}</td><td>${data[t]}</td><td>${F[t]}</td><td>${e}</td><td>${e2}</td></tr>`;
+            }
+            document.getElementById(tableId).innerHTML = h;
+        }
+
+        function mseBox(id, label, val, isWinner) {
+            document.getElementById(id).innerHTML = `
+    <div class="mse-box ${isWinner ? 'winner' : ''}">
+      <div class="label">${label}</div>
+      <div class="value">${val}${isWinner ? '<span class="winner-badge">✓ BEST</span>' : ''}</div>
+    </div>`;
+        }
+
+        function mseBoxes(id, items) {
+            document.getElementById(id).innerHTML = items.map(it =>
+                `<div class="mse-box ${it.win ? 'winner' : ''}">
+      <div class="label">${it.label}</div>
+      <div class="value">${it.val}${it.win ? '<span class="winner-badge">✓ BEST</span>' : ''}</div>
+    </div>`).join('');
+        }
+
+        // ─────────────────────────────────────────────
+        // DRAW EVERYTHING
+        // ─────────────────────────────────────────────
+        renderMA3Table();
+        renderMA5Table();
+        renderWMA3Table();
+
+        // MSE displays
+        mseBoxes('ma3-mse', [{ label: 'MSE₁ (MA3)', val: mse_ma3, win: false }]);
+        mseBoxes('ma5-mse', [{ label: 'MSE₂ (MA5)', val: mse_ma5, win: false }]);
+        mseBoxes('wma3-mse', [{ label: 'MSE₃ (WMA3)', val: mse_wma3, win: false }]);
+
+        // Winner
+        const mses = [mse_ma3, mse_ma5, mse_wma3];
+        const mseNames = ['MA3', 'MA5', 'WMA3'];
+        const winIdx = mses.indexOf(Math.min(...mses));
+        document.getElementById('p1-winner').innerHTML =
+            `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+    ${[{ l: 'MSE₁ (MA3)', v: mse_ma3 }, { l: 'MSE₂ (MA5)', v: mse_ma5 }, { l: 'MSE₃ (WMA3)', v: mse_wma3 }].map((m, i) =>
+                `<div class="mse-box ${i === winIdx ? 'winner' : ''}">
+      <div class="label">${m.l}</div>
+      <div class="value">${m.v}${i === winIdx ? '<span class="winner-badge">✓ BEST</span>' : ''}</div>
+    </div>`).join('')}
+  </div>
+  <div class="decision-box">
+    <strong>Decision:</strong> The <strong>${mseNames[winIdx]}</strong> model has the smallest MSE = <strong>${mses[winIdx]}</strong>, making it the best fit among the three moving average approaches.
+  </div>`;
+
+        // ── Chart 1 ──
+        const forecastMA3 = Array(n1).fill(null);
+        for (let i = 3; i < n1; i++) forecastMA3[i] = ma3[i - 1];
+        const forecastMA5 = Array(n1).fill(null);
+        for (let i = 5; i < n1; i++) forecastMA5[i] = ma5[i - 1];
+        const forecastWMA3 = Array(n1).fill(null);
+        for (let i = 3; i < n1; i++) forecastWMA3[i] = wma3[i - 1];
+
+        new Chart(document.getElementById('chart1'), {
+            type: 'line',
+            data: {
+                labels: labels1,
+                datasets: [
+                    { label: 'Original Xₜ', data: Xt, borderColor: '#f8fafc', backgroundColor: 'rgba(248,250,252,0.08)', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#f8fafc', tension: 0.3 },
+                    { label: 'MA3 Forecast', data: forecastMA3, borderColor: '#60a5fa', backgroundColor: 'transparent', borderWidth: 2, borderDash: [], pointRadius: 3, tension: 0.3, spanGaps: false },
+                    { label: 'MA5 Forecast', data: forecastMA5, borderColor: '#f472b6', backgroundColor: 'transparent', borderWidth: 2, borderDash: [4, 3], pointRadius: 3, tension: 0.3, spanGaps: false },
+                    { label: 'WMA3 Forecast', data: forecastWMA3, borderColor: '#34d399', backgroundColor: 'transparent', borderWidth: 2, borderDash: [2, 2], pointRadius: 3, tension: 0.3, spanGaps: false },
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } } },
+                    title: { display: true, text: 'Problem 1: Xₜ and Three Moving Average Forecasts', color: '#e2e8f0', font: { size: 14, weight: '600' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e293b' } },
+                    y: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e293b' }, title: { display: true, text: 'Value', color: '#64748b' } }
+                }
+            }
+        });
+
+        // ── Problem 2 tables ──
+        renderESTable('es02-table', Yt, F02, errs_02, 0.2);
+        renderESTable('es08-table', Yt, F08, errs_08, 0.8);
+
+        // MSE boxes P2
+        document.getElementById('es02-mse').innerHTML =
+            `<div class="mse-box ${mse_02 < mse_08 ? 'winner' : ''}">
+    <div class="label">MSE (α=0.2)</div>
+    <div class="value">${mse_02}${mse_02 < mse_08 ? '<span class="winner-badge">✓ BEST</span>' : ''}</div>
+  </div>`;
+        document.getElementById('es08-mse').innerHTML =
+            `<div class="mse-box ${mse_08 < mse_02 ? 'winner' : ''}">
+    <div class="label">MSE' (α=0.8)</div>
+    <div class="value">${mse_08}${mse_08 < mse_02 ? '<span class="winner-badge">✓ BEST</span>' : ''}</div>
+  </div>`;
+
+        // ── Chart 2 ──
+        new Chart(document.getElementById('chart2'), {
+            type: 'line',
+            data: {
+                labels: labels2,
+                datasets: [
+                    { label: 'Original Yₜ', data: Yt, borderColor: '#f8fafc', backgroundColor: 'rgba(248,250,252,0.08)', borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#f8fafc', tension: 0.3 },
+                    { label: 'F(t) α=0.2', data: F02, borderColor: '#60a5fa', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.3 },
+                    { label: "F'(t) α=0.8", data: F08, borderColor: '#f97316', backgroundColor: 'transparent', borderWidth: 2, borderDash: [4, 3], pointRadius: 4, tension: 0.3 },
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } } },
+                    title: { display: true, text: "Problem 2: Yₜ, F(t) α=0.2 and F'(t) α=0.8", color: '#e2e8f0', font: { size: 14, weight: '600' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e293b' } },
+                    y: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e293b' }, title: { display: true, text: 'Value', color: '#64748b' } }
+                }
+            }
+        });
+
+        // ── Decision P2 ──
+        const betterAlpha = mse_02 < mse_08 ? '0.2' : '0.8';
+        const betterMSE = Math.min(mse_02, mse_08);
+        document.getElementById('p2-decision').innerHTML = `
+  <div class="decision-box" style="margin-top:14px;">
+    <strong>Decision:</strong> α=0.8 reacts quickly to recent changes (high weight on latest observation), 
+    while α=0.2 produces a smoother forecast that is slower to adapt. 
+    The model with α=<strong>${betterAlpha}</strong> achieves a lower MSE = <strong>${betterMSE}</strong>, 
+    making it the better fit for this series. 
+    ${mse_08 < mse_02
+                ? 'Since the series shows frequent directional changes, the higher α=0.8 tracks the data more responsively.'
+                : 'The smoother α=0.2 performs better here, suggesting the series has stable underlying patterns without sharp regime shifts.'}
+  </div>`;
+    </script>
+</body>
+
+</html>
